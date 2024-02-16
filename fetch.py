@@ -239,7 +239,7 @@ def initialize_cpu_info():
             conn.close()
 
 def initialize_dll():
-    file = getcwd() + '\\LibreHardwareMonitorLib'
+    file = getcwd() + '\\Lib'
     clr.AddReference(file)
 
     from LibreHardwareMonitor import Hardware

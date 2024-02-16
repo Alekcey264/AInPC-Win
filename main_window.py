@@ -75,7 +75,8 @@ class MainWindow(QMainWindow):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_table_with_timer)
-       
+
+        self.initialize_table(None, 'Процессор')
         self.show()
 
     def fix_table(self):
