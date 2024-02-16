@@ -219,19 +219,19 @@ class InitializingGraphsThread(QThread):
         self.iniatilizing_graphs_signal.emit(container)
 
 def initialize_cpu_info():
-    cpu_name = str(popen("wmic cpu get name").read().encode()).split("\\n\\n")
+    cpu_name = str(popen('wmic cpu get name').read().encode()).split('\\n\\n')
     cpu_name = cpu_name[1].strip()
     try:
         conn = sqlite3.connect(db)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM cpu_info WHERE cpu_name = ?", (cpu_name,))
+        cursor.execute('SELECT * FROM cpu_info WHERE cpu_name = ?', (cpu_name,))
         info = cursor.fetchone()
         return int(info[3]), int(info[4])
         
     except sqlite3.Error as error:
         message_box = QMessageBox()
-        message_box.setWindowTitle("Ошибка")
-        message_box.setText(f"Возникла ошибка в ходе получения информации о процессоре {cpu_name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.")
+        message_box.setWindowTitle('Ошибка')
+        message_box.setText(f'Возникла ошибка в ходе получения информации о процессоре {cpu_name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
         message_box.setIcon(QMessageBox.Icon.Warning)
         message_box.exec()
     finally:

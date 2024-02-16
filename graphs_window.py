@@ -19,7 +19,7 @@ class GraphsWindow(QMainWindow):
         self.graphs_thread.graphs_signal.connect(self.on_change)
 
     def show_graphs_splash_screen(self):
-        splash_pix = QPixmap(getcwd() + "/recources//graph_icon.png").scaled(QSize(500, 500), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        splash_pix = QPixmap(getcwd() + '/recources//graph_icon.png').scaled(QSize(500, 500), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
         splash.setFixedSize(500, 500)
         splash.setWindowFlags(Qt.WindowType.FramelessWindowHint)
@@ -31,7 +31,7 @@ class GraphsWindow(QMainWindow):
     def create_graphs_window(self, splash):
         splash.close()
 
-        self.setWindowTitle("AInPC Графики")
+        self.setWindowTitle('AInPC Графики')
         self.setFixedSize(QSize(900, 500))
         central_widget = QWidget()
         layout = QVBoxLayout()
@@ -55,28 +55,28 @@ class GraphsWindow(QMainWindow):
                 name = self.graphs_list[n][0]
                 plot_widget = pyqtgraph.PlotWidget()
                 plot_widget.setMouseEnabled(x = False, y = False)
-                plot_widget.setBackground("w")
+                plot_widget.setBackground('w')
                 plot_widget.showGrid(x = True, y = True)
                 plot_widget.setFixedWidth(405)
                 plot_widget.plotItem.setFixedWidth(395)
                 plot_widget.setFixedHeight(220)
                 plot_widget.plotItem.setFixedHeight(215)
                 plot_widget.plotItem.setTitle(name, color = (0, 0, 0)) 
-                x_axis = plot_widget.getAxis("bottom")
+                x_axis = plot_widget.getAxis('bottom')
                 #x_axis.setStyle(showValues = False)
-                if "Температура" in name:
+                if 'Температура' in name:
                     plot_widget.plotItem.setLabel('left', '<b>Значение (\u00B0C)<\b>', color = (0, 0, 0))
                     pen = pyqtgraph.mkPen(color = (255, 0, 0), width = 4.5)
-                elif "Частота" in name:
-                    if "ядра" in name:
+                elif 'Частота' in name:
+                    if 'ядра' in name:
                         plot_widget.plotItem.setLabel('left', '<b>Значение (GHz)<\b>', color = (0, 0, 0))
                     else:
                         plot_widget.plotItem.setLabel('left', '<b>Значение (MHz)<\b>', color = (0, 0, 0))
                     pen = pyqtgraph.mkPen(color = (0, 0, 0), width = 4.5)
-                elif "Загруженность" in name:
+                elif 'Загруженность' in name:
                     plot_widget.plotItem.setLabel('left', '<b>Значение (%)<\b>', color = (0, 0, 0))
                     pen = pyqtgraph.mkPen(color = (0, 255, 0), width = 4.5)
-                elif "Скорость вращения" in name:
+                elif 'Скорость вращения' in name:
                     plot_widget.plotItem.setLabel('left', '<b>Значение (об\мин)<\b>', color = (0, 0, 0))
                     pen = pyqtgraph.mkPen(color = (0, 0, 255), width = 4.5)
                 plot_widget.plotItem.setLabel('bottom', '<b>Время (сек.)<\b>', color = (0, 0, 0))
@@ -126,9 +126,9 @@ class GraphsWindow(QMainWindow):
     def sort_values(self, values_list, names_list):
 
         temp_list = []
-        temp_list += (sorted([sublist for sublist in values_list if 'Температура ядра процессора' in sublist[0]], key=lambda x: int(x[0].split("#")[1])))
+        temp_list += (sorted([sublist for sublist in values_list if 'Температура ядра процессора' in sublist[0]], key=lambda x: int(x[0].split('#')[1])))
         temp_list += (sorted([sublist for sublist in values_list if 'Загруженность ядра' in sublist[0]], key=lambda x: int(re.search(r'#(\d+)', x[0]).group(1))))
-        temp_list += (sorted([sublist for sublist in values_list if 'Частота работы ядра процессора' in sublist[0]], key=lambda x: int(x[0].split("#")[1])))
+        temp_list += (sorted([sublist for sublist in values_list if 'Частота работы ядра процессора' in sublist[0]], key=lambda x: int(x[0].split('#')[1])))
         temp_list += [values_list[names_list.index('Частота работы шины процессора')]]
         if names_list.count('Температура ядра видеокарты') > 1:
             indexes = [index for index, item in enumerate(names_list) if item == 'Температура ядра видеокарты']
@@ -159,8 +159,8 @@ class GraphsWindow(QMainWindow):
             else:
                 temp_list += [values_list[names_list.index('Частота работы памяти видеокарты')]]    
         temp_list += [values_list[names_list.index('Загруженность оперативной памяти')]]  
-        temp_list += (sorted([sublist for sublist in values_list if 'Температура сенсора материнской платы' in sublist[0]], key=lambda x: int(x[0].split("#")[1])))
-        temp_list += (sorted([sublist for sublist in values_list if 'Скорость вращения вентилятора' in sublist[0]], key=lambda x: int(x[0].split("#")[1])))
+        temp_list += (sorted([sublist for sublist in values_list if 'Температура сенсора материнской платы' in sublist[0]], key=lambda x: int(x[0].split('#')[1])))
+        temp_list += (sorted([sublist for sublist in values_list if 'Скорость вращения вентилятора' in sublist[0]], key=lambda x: int(x[0].split('#')[1])))
         return temp_list
     
     def correlate_values(self, graphs_list, values_list, names_list):
