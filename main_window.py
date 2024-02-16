@@ -1,6 +1,7 @@
 from fetch import *
 from global_import import *
 from additional_classes import *
+from graphs_window import GraphsWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -30,6 +31,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("AInPC")
         self.setFixedSize(QSize(830, 500))
+        #self.setWindowIcon(QIcon(getcwd() + "/recources//main_icon.png"))
         
         menubar = self.menuBar()
         file_menu = menubar.addMenu("Вид")
@@ -224,7 +226,6 @@ class MainWindow(QMainWindow):
     def fill_table_cpu_temp(self):
         data = self.cpu_temp
         data = data[:self.cpu_cores + 1]
-        print(data)
         for row in range(self.cpu_cores):
             data[row][1] = data[row][1].replace("CPU Core", "Ядро процессора")
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
@@ -252,7 +253,6 @@ class MainWindow(QMainWindow):
                 else:
                     item[1] = item[1].replace("CPU Total", "Общая загрузка процессора\t")
                     self.table_widget.setItem(self.cpu_threads + 1, 0, QTableWidgetItem(str(item[1]) + "\t"))
-        print(self.cpu_threads_info)
         self.table_widget.setSpan(self.cpu_threads, 0, 1, 2)
         if not self.cpu_threads_flag:
             for item in self.cpu_threads_info:
@@ -276,7 +276,6 @@ class MainWindow(QMainWindow):
 
     def fill_table_cpu_clock(self):
         data = self.cpu_clock
-        print(data)
         self.table_widget.setSpan(self.cpu_cores, 0, 1, 2)
         for item in data:
             if item[0] in range(1, self.cpu_cores + 1):
@@ -290,7 +289,6 @@ class MainWindow(QMainWindow):
     
     def fill_table_cpu_power(self):
         data = self.cpu_power
-        print(data)
         for row in range(len(data)):
             data[row][1] = data[row][1].replace("CPU Package", "Пакет процессора").replace("CPU Cores", "Ядра процессора").replace("CPU Memory", "Память процессора")
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
@@ -314,7 +312,6 @@ class MainWindow(QMainWindow):
 
     def fill_table_gpu_temp(self):
         data = self.gpu_temp
-        print(data)
         if len(data) == 2:
             self.table_widget.setItem(2, 0, QTableWidgetItem("Память видеокарты\t"))
             gpu_memory_temp = QTableWidgetItem(str("Отсутствует датчик температуры на видеокарте"))
@@ -339,7 +336,6 @@ class MainWindow(QMainWindow):
                 item[0] = 2
                 temp.append(item)
         data = temp
-        print(data)
         self.table_widget.setItem(0, 0, QTableWidgetItem("Ядро видеокарты\t"))
         self.table_widget.setItem(1, 0, QTableWidgetItem("Память видеокарты\t"))
         self.table_widget.setItem(2, 0, QTableWidgetItem("Фрейм-буфер видеокарты\t"))
@@ -359,7 +355,6 @@ class MainWindow(QMainWindow):
                 item[0] = 1
                 temp.append(item)
         data = temp
-        print(data)
         self.table_widget.setItem(0, 0, QTableWidgetItem("Ядро видеокарты\t"))
         self.table_widget.setItem(1, 0, QTableWidgetItem("Память видеокарты\t"))
         for i in range(2):
@@ -369,7 +364,6 @@ class MainWindow(QMainWindow):
 
     def fill_table_gpu_power(self):
         data = self.gpu_power
-        print(data)
         self.table_widget.setItem(0, 0, QTableWidgetItem("Ядро видеокарты\t"))
         self.table_widget.setItem(0, 1, QTableWidgetItem(str(round(data[0][2], 2)) + ' Вт'))
 
@@ -381,14 +375,12 @@ class MainWindow(QMainWindow):
                 item[1] = item[1].replace("GPU Memory Free", "Свободный объем памяти видеокарты").replace("GPU Memory Total", "Общий объем памяти видеокарты").replace("GPU Memory Used", "Занятый объем памяти видеокарты")
                 temp.append(item)
         data = temp
-        print(data)
         for item in data:
             self.table_widget.setItem(item[0], 0, QTableWidgetItem(str(item[1]) + '\t'))
             self.table_widget.setItem(item[0], 1, QTableWidgetItem(str(round(item[2], 2)) + ' Мб'))
         
     def fill_table_ram_load(self):
         data = self.ram_data
-        print(data)
         for row in range(4):
             data[row][1] = data[row][1].replace("Virtual Memory Available", "Доступно виртуальной памяти").replace("Virtual Memory Used", "Использовано виртуальной памяти").replace("Memory Available", "Доступно физической памяти").replace("Memory Used", "Использовано физической памяти")
             self.table_widget.setItem(data[row][0], 0, QTableWidgetItem(str(data[row][1]) + '\t'))
@@ -397,7 +389,6 @@ class MainWindow(QMainWindow):
         self.table_widget.setSpan(4, 0, 1, 2)
         
         data = self.ram_load
-        print(data)
         for row in range(5, 7):
             data[row - 5][1] = data[row - 5][1].replace("Virtual Memory", "Загрузка виртуальной памяти").replace("Memory", "Загрузка физической памяти")
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row - 5][1]) + '\t'))
@@ -423,7 +414,6 @@ class MainWindow(QMainWindow):
 
     def fill_table_mb_temp(self):
         data = self.mb_temp
-        print(data)
         for row in range(len(data)):
             data[row][1] = data[row][1].replace("Temperature", "Датчик температуры")
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
@@ -431,7 +421,6 @@ class MainWindow(QMainWindow):
 
     def fill_table_mb_voltage(self):
         data = self.mb_voltage
-        print(data)
 
         for row in range(len(data)):
             data[row][1] = data[row][1].replace("Voltage", "Вольтаж")
@@ -440,7 +429,6 @@ class MainWindow(QMainWindow):
 
     def fill_table_mb_fans(self):
         data = self.mb_fans_control
-        print(data)
         for row in range(len(data)):
             data[row][1] = data[row][1].replace("Fan", "Контроллер вентилятора")
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
@@ -449,7 +437,6 @@ class MainWindow(QMainWindow):
         self.table_widget.setSpan(len(data), 0, 1, 2)
 
         data = self.mb_fans
-        print(data)
         for row in range(len(self.mb_fans_control) + 1, len(self.mb_fans_control) + 1 + len(data)):
             data[row - len(self.mb_fans_control) - 1][1] = data[row - len(self.mb_fans_control) - 1][1].replace("Fan", "Вентилятор")
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row - len(self.mb_fans_control) - 1][1]) + '\t'))
@@ -764,8 +751,7 @@ class MainWindow(QMainWindow):
             self.timer.start(1000)
 
     def open_graphs_window(self):
-        #self.graphs_window = GraphsWindow(HardwareHandle, cpu_cores)
-        self.graphs_window.show()
+        self.graphs_window = GraphsWindow()
     
     def open_cmd(self):
         system('start cmd.exe')
@@ -780,14 +766,19 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.hide()
         self.stats_thread.running = False
+        self.timer.stop()
         self.stop_thread()
         super().closeEvent(event)
 
 @main_requires_admin
 def main():
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(getcwd() + "/recources//main_icon.png"))
     window = MainWindow()
     sys.exit(app.exec())
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except PyWinError:
+        exit()
