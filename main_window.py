@@ -1,12 +1,14 @@
+#Импортируем из остальных файлов проекта необходимые зависимости - классы, функции и модули
 from fetch import *
 from global_import import *
 from additional_classes import *
 from graphs_window import GraphsWindow
 
+#Создаем главное рабочее окно
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
+#Создаем переменные и зависимости, используемые в рамках главного окна
         self.root_for_timer = None
         self.text_for_timer = None
         self.cpu_cores, self.cpu_threads = initialize_cpu_info()
@@ -28,11 +30,11 @@ class MainWindow(QMainWindow):
         self.gpu_memory = []
         self.ram_load = []
         self.ram_data = []
-
+#Настраиваем вид главного окна
         self.setWindowTitle('AInPC')
         self.setFixedSize(QSize(830, 500))
         self.setWindowIcon(QIcon(getcwd() + '/recources//main_icon.png'))
-        
+#Создаем и настраиваем верхнее меню
         menubar = self.menuBar()
         file_menu = menubar.addMenu('Вид')
         menubar_height = self.menuBar().height()
@@ -48,14 +50,14 @@ class MainWindow(QMainWindow):
         file_menu.addAction(open_cmd)
         file_menu.addAction(open_powershell)
         file_menu.addAction(create_report)
-
+#Создаем и настраиваем левую часть окна - дерево, в котором содежится меню выбора части ПК
         self.tree_widget = QTreeWidget(self)
         self.tree_widget.setGeometry(10, menubar_height, 150, self.height() - menubar_height - 10)
         self.tree_widget.setHeaderHidden(True)
         self.setup_tree()
         self.tree_widget.itemSelectionChanged.connect(self.on_item_selected)
         self.tree_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-
+#Создаем и настраиваем правую часть окна - таблицу, где отображается информация о выбранном компоненте системы
         self.table_widget = QTableWidget(self)
         self.table_widget.setGeometry(self.tree_widget.width() + 20 + 10, menubar_height, self.width() - self.tree_widget.width() - 20 - 10 - 10, self.height() - menubar_height - 10)
         self.table_widget.verticalHeader().setVisible(False)
@@ -68,17 +70,19 @@ class MainWindow(QMainWindow):
         self.table_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_widget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setup_table(9)
-
+#Создаем поток опроса датчков компонентов системы и "подключаем" его реакцию на готовность обновления
         self.stats_thread = StatsThread()
         self.stats_thread.start()
         self.stats_thread.sensors_signal.connect(self.on_change)
-
+#Создаем таймер обновления и "подключаем" его действие, по истечению времени таймера
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_table_with_timer)
-
+#Заполняем правую часть окна данными, которые отображаются самыми первыми
         self.initialize_table(None, 'Процессор')
+#Отображаем главное окно
         self.show()
 
+#Функция, служащая для выравнивания всех ячеек в таблице справа
     def fix_table(self):
         for row in range(self.table_widget.rowCount()):
             for col in range(self.table_widget.columnCount()):
@@ -86,12 +90,14 @@ class MainWindow(QMainWindow):
                     self.table_widget.setSpan(row, col, 1, 1)
         self.table_widget.clearContents()
 
+#Функция, подготавливающая таблицу для отображения справочных данных
     def setup_table(self, row_count):
         column_names = ['Поле', 'Описание']
         self.table_widget.setRowCount(row_count)
         self.table_widget.setColumnCount(2)
         self.table_widget.setHorizontalHeaderLabels(column_names)
 
+#Функция, заполняющая дерево в левой части экрана всеми "ветвями"
     def setup_tree(self):
         root_item_cpu = QTreeWidgetItem(self.tree_widget, ['Процессор'])               
         child_item1_cpu = QTreeWidgetItem(root_item_cpu, ['Температура'])
@@ -109,6 +115,8 @@ class MainWindow(QMainWindow):
         root_item_ram = QTreeWidgetItem(self.tree_widget, ['Оперативная память'])
         child_item1_ram = QTreeWidgetItem(root_item_ram, ['Числовая информация'])
 
+#Условие, в рамках которого система немного адаптируется под ноутбуки, 
+#однако, чтобы система могла полноценно работать на портативных устройствах требуются обширные правки
         root_item_mb = QTreeWidgetItem(self.tree_widget, ['Материнская плата'])
         mb_manufacturer_cmd = str(popen('wmic baseboard get manufacturer').read().encode()).split('\\n\\n')
         if mb_manufacturer_cmd[1].rstrip() != 'Notebook':
@@ -121,8 +129,10 @@ class MainWindow(QMainWindow):
         root_item_logical_disks = QTreeWidgetItem(self.tree_widget, ['Логические диски'])
         root_item_physical_disks = QTreeWidgetItem(self.tree_widget, ['Физические диски'])
         
+#Открытие всех элементов дерева
         self.tree_widget.expandAll()
 
+#Функция, работающая по сообщению от потока, она обновляет все массивы, в которых хранятся значения датчиков
     def on_change(self, data):
         for item in data:
             if item[0][4] == 'CPU':
@@ -159,10 +169,12 @@ class MainWindow(QMainWindow):
                     self.mb_fans_control = item
                 elif item[0][3] == 'Fan':
                     self.mb_fans = item
-    
+
+#Функция, принудительно останавливающая поток при закрытии программы
     def stop_thread(self):
         self.stats_thread.stop()
 
+#Функция, работающая по сообщению от таймера, запускает функцию в зависимости от того, какое "ветвь" сейчас активна
     def update_table_with_timer(self):
         if self.root_for_timer == 'CPU':
             if self.text_for_timer == 'Temperature':                               
@@ -194,7 +206,8 @@ class MainWindow(QMainWindow):
                 self.fill_table_mb_voltage()
             elif self.text_for_timer == 'Control':
                 self.fill_table_mb_fans()
-
+       
+#Функция, считывающая какую, именно "ветвь" выбрал пользователь
     def on_item_selected(self):
         self.root_for_timer = None
         self.text_for_timer = None
@@ -208,6 +221,7 @@ class MainWindow(QMainWindow):
         if selected_item:
             self.initialize_table(root_text, selected_text)
 
+#Функция, считывающая справочную информацию о процессоре из базы данных
     def get_cpu_info(self, name):
             try:
                 conn = sqlite3.connect(db)
@@ -224,6 +238,7 @@ class MainWindow(QMainWindow):
                 if conn:
                     conn.close()
 
+#Функция, заполняющая таблицу температурными показателями ядер процессора
     def fill_table_cpu_temp(self):
         data = self.cpu_temp
         data = data[:self.cpu_cores + 1]
@@ -237,6 +252,7 @@ class MainWindow(QMainWindow):
         self.table_widget.setItem(self.cpu_cores + 1, 0, QTableWidgetItem(str(data[self.cpu_cores][1]) + '\t'))
         self.table_widget.setItem(self.cpu_cores + 1, 1, QTableWidgetItem(str(data[self.cpu_cores][2]) + '\u00B0C'))
 
+#Функция, заполняющая таблицу показателями загрузки ядер и потоков процессора, а также общей загрузкой процессора
     def fill_table_cpu_load(self):
         data = self.cpu_load
         data = data[:self.cpu_threads + 1]
@@ -275,6 +291,7 @@ class MainWindow(QMainWindow):
             elif data[i][0] == 0:
                 self.table_widget.setItem(self.cpu_threads + 1, 1, QTableWidgetItem(str(round(data[i][2], 2)) + '%'))
 
+#Функция, заполняющая таблицу показателями частоты работы ядер и шины процессора
     def fill_table_cpu_clock(self):
         data = self.cpu_clock
         self.table_widget.setSpan(self.cpu_cores, 0, 1, 2)
@@ -288,6 +305,7 @@ class MainWindow(QMainWindow):
                 self.table_widget.setItem(self.cpu_cores + 1, 0, QTableWidgetItem(str(item[1]) + '\t'))
                 self.table_widget.setItem(self.cpu_cores + 1, 1, QTableWidgetItem(str(round(item[2], 2)) + ' МГц'))
     
+#Функция, заполняющая таблицу показателями напряжения, подающимися на процессор
     def fill_table_cpu_power(self):
         data = self.cpu_power
         for row in range(len(data)):
@@ -295,6 +313,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row][2], 2)) + ' Вт'))
 
+#Функция, получающая справочную информацию о видеокарте из базы данных
     def get_gpu_info(self, name):
         try:
             conn = sqlite3.connect(db)
@@ -311,6 +330,7 @@ class MainWindow(QMainWindow):
             if conn:
                 conn.close()
 
+#Функция, заполняющая таблицу температурными показателями видеокарты
     def fill_table_gpu_temp(self):
         data = self.gpu_temp
         if len(data) == 2:
@@ -323,6 +343,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row][2], 2)) + '\u00B0C'))
     
+#Функция, заполняющая таблицу показателями загрузки ядра, памяти и фрейм-буфера видеокарты
     def fill_table_gpu_load(self):
         data = self.gpu_load
         temp = []
@@ -345,6 +366,7 @@ class MainWindow(QMainWindow):
         for item in data:
             self.table_widget.setItem(item[0], 1, QTableWidgetItem(str(round(item[2], 2)) + '%'))
         
+#Функция, заполняющая таблицу показателями частоты работы графического ядра и видеопамяти
     def fill_table_gpu_clock(self):
         data = self.gpu_clock
         temp = []
@@ -363,11 +385,13 @@ class MainWindow(QMainWindow):
         for item in data:
             self.table_widget.setItem(item[0], 1, QTableWidgetItem(str(round(item[2], 2)) + ' МГц'))
 
+#Функция, заполняющая таблицу показателями напряжения, подающихся на видеокарту
     def fill_table_gpu_power(self):
         data = self.gpu_power
         self.table_widget.setItem(0, 0, QTableWidgetItem('Ядро видеокарты\t'))
         self.table_widget.setItem(0, 1, QTableWidgetItem(str(round(data[0][2], 2)) + ' Вт'))
 
+#Функция, заполняющая таблицу информацией об использовании видеопамяти
     def fill_table_gpu_memory(self):
         data = self.gpu_memory
         temp = []
@@ -380,6 +404,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(item[0], 0, QTableWidgetItem(str(item[1]) + '\t'))
             self.table_widget.setItem(item[0], 1, QTableWidgetItem(str(round(item[2], 2)) + ' Мб'))
         
+#Функция, заполняющая таблицу показателями о загрузке оперативной памяти, как физической, так и виртуальной
     def fill_table_ram_load(self):
         data = self.ram_data
         for row in range(4):
@@ -395,6 +420,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row - 5][1]) + '\t'))
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row - 5][2], 2)) + '%'))
 
+#Функция, получающая справочную информацию о материнской плате из базы данных
     def get_mb_info(self):
         mb_name = str(popen('wmic baseboard get product').read().encode()).split('\\n\\n')
         mb_name.pop(0)
@@ -413,6 +439,7 @@ class MainWindow(QMainWindow):
             if conn:
                 conn.close()
 
+#Функция, заполняющая таблицу температурными показателями материнской платы
     def fill_table_mb_temp(self):
         data = self.mb_temp
         for row in range(len(data)):
@@ -420,6 +447,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row][2], 2)) + '\u00B0C'))
 
+#Функция, заполняющая таблицу показателями вольтажей, выдаваемых и подаваемых на материнскую плату
     def fill_table_mb_voltage(self):
         data = self.mb_voltage
 
@@ -428,6 +456,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row][1]) + '\t'))
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row][2], 2)) + ' В'))
 
+#Функция, заполняющая таблицу информацией о загруженности контроллеров вентиляторов и скорости работы вентиляторов
     def fill_table_mb_fans(self):
         data = self.mb_fans_control
         for row in range(len(data)):
@@ -443,9 +472,13 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 0, QTableWidgetItem(str(data[row - len(self.mb_fans_control) - 1][1]) + '\t'))
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row - len(self.mb_fans_control) - 1][2], 2)) + ' об\мин'))
 
+#Функция, инициализирующая таблицу в зависимости от того, какую "ветвь" выбрал пользователь
     def initialize_table(self, root, text):
-        self.fix_table()       
+        self.fix_table()
+#Если пользователь выбрал "ветвь" первого уровня, тогда нам необходимо получить базовую –
+#неизменяющуюся – информацию, поэтому мы можем сразу заполнить таблицу      
         if not root:
+#Если пользователь выбрал "ветвь" первого уровня - останавливаем таймер, чтобы не создавать лишнюю нагрузку на систему
             self.timer.stop()
             if text == 'Процессор':
                 cpu_specs = ['Наименование процессора', 'Сокет', 'Базовая частота', 'Количество ядер', 'Количество потоков', 'Кэш L1', 'Кэш L2', 'Кэш L3', 'Кэш L4', 'Фирма-производитель', 'Информация от производителя']
@@ -646,7 +679,10 @@ class MainWindow(QMainWindow):
                             self.table_widget.setItem(row, 0, QTableWidgetItem(str(item[0: i - 1].rstrip()) + '\t'))
                             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(float(item[i + 1:]) / pow(1024, 3), 2)) + ' Гб'))
                             row += 1
-                            break                     
+                            break 
+#Если пользователь выбрал "ветвь" второго уровня, тогда мы сначала смотрим на то, какое значение
+#имеет "ветвь" первого уровня, а затем смотрим значение "ветви" второго уровня, и в зависимости от этого форматируем таблицу
+#нужным образом   
         elif root:
             if root == 'Процессор':
                 self.root_for_timer = 'CPU'
@@ -747,23 +783,31 @@ class MainWindow(QMainWindow):
                     self.table_widget.setColumnCount(2)
                     self.table_widget.setHorizontalHeaderLabels(column_names)
                     self.fill_table_mb_fans()
+#В случае, если поток еще неактивен, то запускаем его
             if not self.stats_thread.running:
                 self.stats_thread.running = True
+#После выбора новой "ветки" запускаем таймер заново, чтобы обновление происходило стабильно раз в секунду без смещений
             self.timer.start(1000)
 
+#Функция, открывающая окна с графиками
     def open_graphs_window(self):
         self.graphs_window = GraphsWindow()
     
+#Функция, открывающая командную строку Windows
     def open_cmd(self):
         system('start cmd.exe')
 
+#Функция, открывающая Windows PowerShell
     def open_powershell(self):
         system('start powershell.exe')
     
+#Функция, открывающая окно формирования отчета о системе
     def create_report(self):
+        current_time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
         path = getcwd()
-        system(f'start cmd.exe /C msinfo32 /report "{path}\\AInPC System report.txt"')
+        system(f'start cmd.exe /C msinfo32 /report "{path}\\AInPC Report {current_time}.txt"')
 
+#Функция, отвечающая за безопасное выключение программы
     def closeEvent(self, event):
         self.hide()
         self.stats_thread.running = False
@@ -771,12 +815,15 @@ class MainWindow(QMainWindow):
         self.stop_thread()
         super().closeEvent(event)
 
+#Функция, создающая главное окно и запускающая его
 @main_requires_admin
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     sys.exit(app.exec())
 
+#Вызываем функцию, которая создает главное окно, 
+#и обрабатываем случай, если пользователь передумал запускать программу
 if __name__ == '__main__':
     try:
         main()

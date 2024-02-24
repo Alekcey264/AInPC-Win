@@ -1,8 +1,11 @@
+#Импортируем из специально созданного файла все нужные модули
 from global_import import *
 
+#Специальный список, хранящий в себе названия компонентов
 hwtypes = ['Mainboard','SuperIO','CPU','RAM','GpuNvidia','GpuAti','TBalancer','Heatmaster','HDD']
 
-
+#Создание и описание функционала потока, отвественного за получение новых значений
+#с датчиков системы для главного окна
 class StatsThread(QThread):
     sensors_signal = pyqtSignal(list)
     def __init__(self):
@@ -57,6 +60,8 @@ class StatsThread(QThread):
     def stop(self):
         self.terminate()
 
+#Создание и описание функционала потока, отвественного за получение новых значений
+#с датчиков системы для окна с графиками
 class GraphsThread(QThread):
     graphs_signal = pyqtSignal(list)
     def __init__(self):
@@ -76,6 +81,7 @@ class GraphsThread(QThread):
                     self.parse_sensor(subsensor, self.values, self.names)
         massive.extend([self.values, self.names])
     
+#Проверка всех доступных датчиков и перевод их значений на русский язык
     def parse_sensor(self, sensor, values, names):
         sensor_types = [['Temperature', 'SuperIO'], ['Fan', 'SuperIO'], ['Load', 'CPU'], ['Temperature', 'CPU'], ['Clock', 'CPU'], ['Load', 'RAM'], ['Temperature', 'Gpu'], ['Clock', 'Gpu']]
         not_allowed = ['CPU Total', 'CPU Package', 'Distance to TjMax', 'Max', 'Virtual', 'Average']
@@ -133,6 +139,7 @@ class GraphsThread(QThread):
     def stop(self):
         self.terminate()
 
+#Создание и описание функционала потока, который инициализирует начальные значения для графического потока
 class InitializingGraphsThread(QThread):
     iniatilizing_graphs_signal = pyqtSignal(list)
     def __init__(self, splash):
@@ -146,6 +153,7 @@ class InitializingGraphsThread(QThread):
         self.current_names = []
         self.values_max = 1
         self.values_current = 0
+#Опрашиваем все доступные сенсоры 20 раз, чтобы удостовериться, что все нужные значения получены
         for _ in range(20):
             if self.values_max >= self.values_current:
                 pass
@@ -218,6 +226,7 @@ class InitializingGraphsThread(QThread):
         container.append(self.splash)
         self.iniatilizing_graphs_signal.emit(container)
 
+#Функция, получающая из базы данных информацию о количестве ядер и потоков процессора
 def initialize_cpu_info():
     cpu_name = str(popen('wmic cpu get name').read().encode()).split('\\n\\n')
     cpu_name = cpu_name[1].strip()
@@ -238,6 +247,7 @@ def initialize_cpu_info():
         if conn:
             conn.close()
 
+#Функция, запускающая процесс обработки системной библиотеки
 def initialize_dll():
     file = getcwd() + '\\Lib'
     clr.AddReference(file)
@@ -254,4 +264,5 @@ def initialize_dll():
 
     return computer
 
+#Запускаем обработку системной библиотеки
 dll_access = initialize_dll()
