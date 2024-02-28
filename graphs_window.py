@@ -1,23 +1,30 @@
+#Импортируем из остальных файлов проекта необходимые зависимости - классы, функции и модули
 from fetch import *
 from global_import import *
 
-
+#Создаем окно с графиками
 class GraphsWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
+#Создаем переменные и зависимости, используемые в рамках главного окна
         self.values_list = []
         self.names_list = []
         self.graphs_list = []
 
+#Настраиваем окно, отображающееся во время инициализации программы
         splash_for_graphs = self.show_graphs_splash_screen()
+
+#Настраиваем и запускаем поток, инициализирующий первичные показатели датчиков системы   
         self.initializing_graphs = InitializingGraphsThread(splash_for_graphs)
         self.initializing_graphs.start()
         self.initializing_graphs.iniatilizing_graphs_signal.connect(self.on_change_init)
 
+#Создаем поток опроса датчков компонентов системы и "подключаем" его реакцию на готовность обновления
         self.graphs_thread = GraphsThread()
         self.graphs_thread.graphs_signal.connect(self.on_change)
 
+#Функция, отображающая окно инициализации
     def show_graphs_splash_screen(self):
         splash_pix = QPixmap(getcwd() + '/recources//graph_icon.png').scaled(QSize(500, 500), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
@@ -27,15 +34,18 @@ class GraphsWindow(QMainWindow):
 
         splash.show()
         return splash
-        
+
+#Функция, запускающая появление  окна после процессора иницилизации      
     def create_graphs_window(self, splash):
         splash.close()
 
+#Настраиваем вид главного окна
         self.setWindowTitle('AInPC Графики')
         self.setFixedSize(QSize(900, 500))
+
+#Настриваем область отображения графиков
         central_widget = QWidget()
         layout = QVBoxLayout()
-
         scroll_area = QScrollArea(self)
         scroll_widget = QWidget(scroll_area)
         scroll_layout = QVBoxLayout(scroll_widget)
@@ -99,7 +109,7 @@ class GraphsWindow(QMainWindow):
 
         self.graphs_thread.start()
  
-
+#Функция, заполняющая массив первычными данными с датчиков системы
     def on_change_init(self, data):
         self.values_list = data[0]
         self.names_list = data[1]
@@ -107,11 +117,13 @@ class GraphsWindow(QMainWindow):
         self.graphs_list = self.sort_values(self.values_list, self.names_list)
         self.create_graphs_window(data[2])
 
+#Функция, заполняющая массив данными после получения их из потока
     def on_change(self, data):
         self.values_list = data[0]
         self.names_list = data[1]
         self.update_graphs()
 
+#Функция, обновляющая графики
     def update_graphs(self):
         self.correlate_values(self.graphs_list, self.values_list, self.names_list)
         j = 0
@@ -120,11 +132,12 @@ class GraphsWindow(QMainWindow):
             plot.setData(x_ax, self.graphs_list[j][1:])
             j += 1
 
+#Функция, принудительно останавливающая поток при закрытии программы
     def stop_thread(self):
         self.graphs_thread.stop()
 
+#Функция, отсортировывающая значения, полученные из потока, по названиям
     def sort_values(self, values_list, names_list):
-
         temp_list = []
         temp_list += (sorted([sublist for sublist in values_list if 'Температура ядра процессора' in sublist[0]], key=lambda x: int(x[0].split('#')[1])))
         temp_list += (sorted([sublist for sublist in values_list if 'Загруженность ядра' in sublist[0]], key=lambda x: int(re.search(r'#(\d+)', x[0]).group(1))))
@@ -163,6 +176,7 @@ class GraphsWindow(QMainWindow):
         temp_list += (sorted([sublist for sublist in values_list if 'Скорость вращения вентилятора' in sublist[0]], key=lambda x: int(x[0].split('#')[1])))
         return temp_list
     
+#Функция, заполняющая массивы значениями, полученными из потока
     def correlate_values(self, graphs_list, values_list, names_list):
         while values_list:
             for graphs_item in graphs_list:
@@ -179,6 +193,7 @@ class GraphsWindow(QMainWindow):
                         del values_list[values_list.index(values_item)]
                         break               
 
+#Функция, отвечающая за безопасное выключение программы
     def closeEvent(self, event):
         self.hide()
         self.graphs_thread.running = False
