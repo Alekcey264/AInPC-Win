@@ -70,6 +70,7 @@ class MainWindow(QMainWindow):
         self.table_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_widget.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setup_table(9)
+
 #Создаем поток опроса датчков компонентов системы и "подключаем" его реакцию на готовность обновления
         self.stats_thread = StatsThread()
         self.stats_thread.start()

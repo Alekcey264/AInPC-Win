@@ -12,6 +12,7 @@ from os import getcwd, popen, system
 from pywintypes import error as PyWinError
 #Импортируем модуль для получения текущего времени системы
 from datetime import datetime
+from subprocess import Popen
 
 #Записываем метсоположение базы данных в отдельную переменную, чтобы доступ к ней
 #можно было получить из всех частей кода
