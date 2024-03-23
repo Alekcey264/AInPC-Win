@@ -224,20 +224,27 @@ class MainWindow(QMainWindow):
 
 #Функция, считывающая справочную информацию о процессоре из базы данных
     def get_cpu_info(self, name):
-            try:
-                conn = sqlite3.connect(db)
-                cursor = conn.cursor()
-                cursor.execute('SELECT * FROM cpu_info WHERE cpu_name = ?', (name,))
-                return cursor.fetchone()
-            except sqlite3.Error as error:
+        try:
+            conn = sqlite3.connect(db)
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM cpu_info WHERE cpu_name = ?', (name,))
+            info = cursor.fetchone()
+            return info
+        except sqlite3.Error as error:
+            message_box = QMessageBox()
+            message_box.setWindowTitle('Ошибка')
+            message_box.setText('Возникла ошибка в ходе получения информации из базы данных, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
+            message_box.setIcon(QMessageBox.Icon.Warning)
+            message_box.exec()
+        finally:
+            if not info:
                 message_box = QMessageBox()
                 message_box.setWindowTitle('Ошибка')
                 message_box.setText(f'Возникла ошибка в ходе получения информации о процессоре {name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
                 message_box.setIcon(QMessageBox.Icon.Warning)
                 message_box.exec()
-            finally:
-                if conn:
-                    conn.close()
+            if conn:
+                conn.close()
 
 #Функция, заполняющая таблицу температурными показателями ядер процессора
     def fill_table_cpu_temp(self):
@@ -320,14 +327,21 @@ class MainWindow(QMainWindow):
             conn = sqlite3.connect(db)
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM gpu_info WHERE gpu_name = ?', (name,))
-            return cursor.fetchone()
+            info = cursor.fetchone()
+            return info
         except sqlite3.Error as error:
             message_box = QMessageBox()
             message_box.setWindowTitle('Ошибка')
-            message_box.setText(f'Возникла ошибка в ходе получения информации о видеокарте {name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
+            message_box.setText('Возникла ошибка в ходе получения информации из базы данных, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
             message_box.setIcon(QMessageBox.Icon.Warning)
             message_box.exec()
         finally:
+            if not info:
+                message_box = QMessageBox()
+                message_box.setWindowTitle('Ошибка')
+                message_box.setText(f'Возникла ошибка в ходе получения информации о видеокарте {name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
+                message_box.setIcon(QMessageBox.Icon.Warning)
+                message_box.exec()
             if conn:
                 conn.close()
 
@@ -429,14 +443,21 @@ class MainWindow(QMainWindow):
             conn = sqlite3.connect(db)
             cursor = conn.cursor()
             cursor.execute('SELECT * FROM mb_info WHERE mb_name = ?', (mb_name[0].rstrip(),))
-            return cursor.fetchone()
+            info = cursor.fetchone()
+            return info
         except sqlite3.Error as error:
             message_box = QMessageBox()
             message_box.setWindowTitle('Ошибка')
-            message_box.setText('Возникла ошибка в ходе получения информации о материнской плате, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
+            message_box.setText('Возникла ошибка в ходе получения информации из базы данных, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
             message_box.setIcon(QMessageBox.Icon.Warning)
             message_box.exec()
         finally:
+            if not info:
+                message_box = QMessageBox()
+                message_box.setWindowTitle('Ошибка')
+                message_box.setText(f'Возникла ошибка в ходе получения информации о материнской плате {mb_name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
+                message_box.setIcon(QMessageBox.Icon.Warning)
+                message_box.exec()
             if conn:
                 conn.close()
 

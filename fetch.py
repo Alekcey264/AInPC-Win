@@ -236,7 +236,6 @@ def initialize_cpu_info():
         cursor.execute('SELECT * FROM cpu_info WHERE cpu_name = ?', (cpu_name,))
         info = cursor.fetchone()
         return int(info[3]), int(info[4])
-        
     except sqlite3.Error as error:
         message_box = QMessageBox()
         message_box.setWindowTitle('Ошибка')
