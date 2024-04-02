@@ -436,9 +436,7 @@ class MainWindow(QMainWindow):
             self.table_widget.setItem(row, 1, QTableWidgetItem(str(round(data[row - 5][2], 2)) + '%'))
 
 #Функция, получающая справочную информацию о материнской плате из базы данных
-    def get_mb_info(self):
-        mb_name = str(popen('wmic baseboard get product').read().encode()).split('\\n\\n')
-        mb_name.pop(0)
+    def get_mb_info(self, mb_name):
         try:
             conn = sqlite3.connect(db)
             cursor = conn.cursor()
@@ -455,7 +453,7 @@ class MainWindow(QMainWindow):
             if not info:
                 message_box = QMessageBox()
                 message_box.setWindowTitle('Ошибка')
-                message_box.setText(f'Возникла ошибка в ходе получения информации о материнской плате {mb_name}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
+                message_box.setText(f'Возникла ошибка в ходе получения информации о материнской плате {mb_name[0].rstrip()}, пожалуйста, попробуйте открыть вкладку повторно или перезапустите программу.')
                 message_box.setIcon(QMessageBox.Icon.Warning)
                 message_box.exec()
             if conn:
@@ -597,18 +595,24 @@ class MainWindow(QMainWindow):
                             self.table_widget.setItem(i, 0, QTableWidgetItem(str(gpu_specs[i]) + '\t'))
                             self.table_widget.setItem(i, 1, QTableWidgetItem(str('-')))
             elif text == 'Оперативная память':
-                ram_manufacturer = str(popen('wmic memorychip get Manufacturer').read().encode()).split('\\n\\n')
-                ram_speed = str(popen('wmic memorychip get Speed').read().encode()).split('\\n\\n')
-                pagefile = str(popen('wmic pagefileset get InitialSize, MaximumSize, Name').read().encode()).split('\\n\\n')
+                ram_manufacturer = popen('wmic memorychip get Manufacturer').read().split('\n\n')
+                ram_speed = popen('wmic memorychip get Speed').read().split('\n\n')
+                pagefile = popen('wmic pagefile get InitialSize, MaximumSize, Name').read().split('\\n\\n')
+                print(pagefile)
+                if pagefile:
+                    pagefile.pop(0)
                 ram_manufacturer.pop(0)
                 ram_speed.pop(0)
-                pagefile.pop(0)
                 row = 0
                 for _ in range(2):
                     ram_manufacturer.pop(-1)
                     ram_speed.pop(-1)
-                    pagefile.pop(-1)
-                self.setup_table((len(ram_manufacturer) * 2) + (len(pagefile) * 3) + 1)
+                    if pagefile:
+                        pagefile.pop(-1)
+                if pagefile:
+                    self.setup_table((len(ram_manufacturer) * 2) + (len(pagefile) * 3) + 1)
+                else:
+                    self.setup_table((len(ram_manufacturer) * 2))                    
                 if len(ram_manufacturer) != 1:
                     for i in range(len(ram_manufacturer)):
                         self.table_widget.setItem(row, 0, QTableWidgetItem(str(f'Фирма-производитель модуля памяти #{i + 1}\t')))
@@ -626,46 +630,48 @@ class MainWindow(QMainWindow):
                     self.table_widget.setItem(row + 1, 0, QTableWidgetItem(str('Частота работы модуля памяти\t')))
                     self.table_widget.setItem(row + 1, 1, QTableWidgetItem(str(ram_speed[0].rstrip() + ' МГц')))             
                 row += 1
-                for i in range(len(pagefile)):
-                    pagefile[i] = pagefile[i].split()
-                if len(pagefile) != 1:
+                if pagefile:
                     for i in range(len(pagefile)):
-                        self.table_widget.setItem(row, 0, QTableWidgetItem(str(f'Адрес файла подкачки #{i + 1}\t')))
-                        self.table_widget.setItem(row, 1, QTableWidgetItem(str(pagefile[i][2].replace('\\\\', '\\'))))
-                        self.table_widget.setItem(row + 1, 0, QTableWidgetItem(str(f'Начальный размер файла подкачки #{i + 1}\t')))
-                        self.table_widget.setItem(row + 1, 1, QTableWidgetItem(str(round(float(pagefile[i][0]) / 1024, 2)) + ' Гб'))
-                        self.table_widget.setItem(row + 2, 0, QTableWidgetItem(str(f'Текущий размер файла подкачки #{i + 1}\t')))
-                        self.table_widget.setItem(row + 2, 1, QTableWidgetItem(str(round(float(pagefile[i][1]) / 1024, 2)) + ' Гб'))
-                        row += 3
-                else:
-                    self.table_widget.setItem(row, 0, QTableWidgetItem(str('Адрес файла подкачки\t')))
-                    self.table_widget.setItem(row, 1, QTableWidgetItem(str(pagefile[0][2].replace('\\\\', '\\'))))
-                    self.table_widget.setItem(row + 1, 0, QTableWidgetItem(str('Начальный размер файла подкачки\t')))
-                    self.table_widget.setItem(row + 1, 1, QTableWidgetItem(str(round(float(pagefile[0][0]) / 1024, 2)) + ' Гб'))
-                    self.table_widget.setItem(row + 2, 0, QTableWidgetItem(str('Текущий размер файла подкачки\t')))
-                    self.table_widget.setItem(row + 2, 1, QTableWidgetItem(str(round(float(pagefile[0][1]) / 1024, 2)) + ' Гб'))
+                        pagefile[i] = pagefile[i].split()
+                    if len(pagefile) != 1:
+                        for i in range(len(pagefile)):
+                            self.table_widget.setItem(row, 0, QTableWidgetItem(str(f'Адрес файла подкачки #{i + 1}\t')))
+                            self.table_widget.setItem(row, 1, QTableWidgetItem(str(pagefile[i][2].replace('\\\\', '\\'))))
+                            self.table_widget.setItem(row + 1, 0, QTableWidgetItem(str(f'Начальный размер файла подкачки #{i + 1}\t')))
+                            self.table_widget.setItem(row + 1, 1, QTableWidgetItem(str(round(float(pagefile[i][0]) / 1024, 2)) + ' Гб'))
+                            self.table_widget.setItem(row + 2, 0, QTableWidgetItem(str(f'Текущий размер файла подкачки #{i + 1}\t')))
+                            self.table_widget.setItem(row + 2, 1, QTableWidgetItem(str(round(float(pagefile[i][1]) / 1024, 2)) + ' Гб'))
+                            row += 3
+                    else:
+                        self.table_widget.setItem(row, 0, QTableWidgetItem(str('Адрес файла подкачки\t')))
+                        self.table_widget.setItem(row, 1, QTableWidgetItem(str(pagefile[0][2].replace('\\\\', '\\'))))
+                        self.table_widget.setItem(row + 1, 0, QTableWidgetItem(str('Начальный размер файла подкачки\t')))
+                        self.table_widget.setItem(row + 1, 1, QTableWidgetItem(str(round(float(pagefile[0][0]) / 1024, 2)) + ' Гб'))
+                        self.table_widget.setItem(row + 2, 0, QTableWidgetItem(str('Текущий размер файла подкачки\t')))
+                        self.table_widget.setItem(row + 2, 1, QTableWidgetItem(str(round(float(pagefile[0][1]) / 1024, 2)) + ' Гб'))
             elif text == 'Материнская плата':
                 self.setup_table(5)
+                mb_name = str(popen('wmic baseboard get product').read().encode()).split('\\n\\n')
+                mb_name.pop(0)
                 self.table_widget.setItem(0, 0, QTableWidgetItem(str('Наименование материнской платы\t')))
                 self.table_widget.setItem(1, 0, QTableWidgetItem(str('Фирма-производитель\t')))
                 self.table_widget.setItem(2, 0, QTableWidgetItem(str('Информация от производителя\t')))
                 self.table_widget.setItem(3, 0, QTableWidgetItem(str('Официальный драйвер\t')))
                 self.table_widget.setItem(4, 0, QTableWidgetItem(str('Версия BIOS\t')))             
-                info = self.get_mb_info()
+                info = self.get_mb_info(mb_name)
                 if info:
-                    self.table_widget.setItem(0, 1, QTableWidgetItem(str(info[0])))
                     hyperlink_man = HyperlinkLabel(f'{info[1]}', f'{info[1]}')
                     self.table_widget.setCellWidget(2, 1, hyperlink_man)
                     hyperlink_driver = HyperlinkLabel(f'{info[2]}', f'{info[2]}')
                     self.table_widget.setCellWidget(3, 1, hyperlink_driver)
                 else:
-                    self.table_widget.setItem(0, 1, QTableWidgetItem(str('-')))
                     self.table_widget.setItem(2, 1, QTableWidgetItem(str('-')))
                     self.table_widget.setItem(3, 1, QTableWidgetItem(str('-')))                   
                 mb_info_cmd = str(popen('wmic baseboard get manufacturer').read().encode()).split('\\n\\n')
                 mb_bios_cmd = str(popen('wmic bios get smbiosbiosversion').read().encode()).split('\\n\\n')
                 mb_info_cmd.pop(0)
                 mb_bios_cmd.pop(0)
+                self.table_widget.setItem(0, 1, QTableWidgetItem(str(mb_name[0].rstrip())))
                 self.table_widget.setItem(1, 1, QTableWidgetItem(str(mb_info_cmd[0].rstrip())))
                 self.table_widget.setItem(4, 1, QTableWidgetItem(str(mb_bios_cmd[0].rstrip())))
             elif text == 'Логические диски':
